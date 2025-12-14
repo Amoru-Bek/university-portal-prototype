@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // In a real app we'd hash this, for now simple string
+  name      String?
+  role      String   // "ADMIN" | "STUDENT"
+  facultyId String?  // Only for admins (restricted to one faculty) or students (their main faculty)
+  faculty   Faculty? @relation(fields: [facultyId], references: [id])
+  requests  DocumentRequest[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Faculty {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  users     User[]
+  requests  DocumentRequest[]
+}
+
+model DocumentRequest {
+  id          String   @id @default(uuid())
+  type        String   // "DIPLOMA" | "CERTIFICATE" | "TRANSCRIPT"
+  status      String   @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
+  studentId   String
+  facultyId   String
+  student     User     @relation(fields: [studentId], references: [id])
+  faculty     Faculty  @relation(fields: [facultyId], references: [id])
+  
+  description String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
